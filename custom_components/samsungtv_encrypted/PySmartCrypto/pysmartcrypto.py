@@ -6,11 +6,14 @@ from .command_encryption import AESCipher
 import requests
 import time
 import websocket
+import threading
 
 class PySmartCrypto():
     UserId = "654321"
     AppId = "12345"
     deviceId =  "7e509404-9d7c-46b4-8f6a-e2a9668ad184"
+
+    def disconnectCallback(self): self.close()
 
     def getFullUrl(self, urlPath):
         return "http://" + self._host + ":" + self._port + urlPath
@@ -118,6 +121,9 @@ class PySmartCrypto():
         self._host = host
         self._port = port
         self._connection = self.connect()
+
+        self._timer = threading.Timer(10, self.disconnectCallback)
+        self._timer.start()
 
         if token is None and sessionid is None:
             self.StartPairing()
