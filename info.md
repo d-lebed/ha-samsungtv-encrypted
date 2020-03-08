@@ -7,7 +7,7 @@
 # HomeAssistant - SamsungTV Encrypted Component
 
 This is a custom component to allow control of Encrypted SamsungTV devices in [HomeAssistant](https://home-assistant.io). 
-This should work on H and J 2014/2015 models (according to [PySmartCrypto](https://github.com/eclair4151/SmartCrypto) specs)
+This should work on H and J 2014/2015 models (according to [PySmartCrypto](https://github.com/eclair4151/SmartCrypto) specs).
 Is a modified version of the built-in [samsungtv](https://www.home-assistant.io/integrations/samsungtv/) with some extra features:
 
 # Additional Features:
@@ -71,10 +71,10 @@ Edit it by adding the following lines:
 # Working Models
 
 - **H6400**
-- **H6200**   (caveat: off-state detection, see Issue #1)
-- **H5500AW** (caveat: off-state detection, see Issue #1)
-- **HU7500**  (caveat: off-state detection, see Issue #1)
-- **HU8550**  (caveat: off-state detection, see Issue #1)
+- **H6200**
+- **H5500AW**
+- **HU7500**
+- **HU8550**
 
 ***References***
 ----------------
