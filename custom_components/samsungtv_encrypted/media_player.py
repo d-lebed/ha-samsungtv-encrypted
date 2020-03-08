@@ -267,9 +267,7 @@ class SamsungTVDevice(MediaPlayerDevice):
     @property
     def supported_features(self):
         """Flag media player features that are supported."""
-        if self._mac:
-            return SUPPORT_SAMSUNGTV | SUPPORT_TURN_ON
-        return SUPPORT_SAMSUNGTV
+        return SUPPORT_SAMSUNGTV | SUPPORT_TURN_ON
 
     def volume_up(self):
         """Volume up the media player."""
@@ -331,9 +329,7 @@ class SamsungTVDevice(MediaPlayerDevice):
 
     def turn_off(self):
         """Turn off media player."""
-        self._end_of_power_off = dt_util.utcnow() + timedelta(seconds=15)
-
-        self.send_key("KEY_POWEROFF")
+        hdmi_cec.standby()
         # Force closing of remote session to provide instant UI feedback
         try:
             self.get_remote().close()
@@ -343,10 +339,7 @@ class SamsungTVDevice(MediaPlayerDevice):
 
     def turn_on(self):
         """Turn the media player on."""
-        if self._mac:
-            wakeonlan.send_magic_packet(self._mac)
-        else:
-            self.send_key("KEY_POWERON")
+        hdmi_cec.power_on()
 
     async def async_select_source(self, source):
         """Select input source."""
