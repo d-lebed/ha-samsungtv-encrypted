@@ -8,6 +8,7 @@ import voluptuous as vol
 import os
 import websocket
 import wakeonlan
+import hdmi_cec
 import time
 import requests
 import subprocess
