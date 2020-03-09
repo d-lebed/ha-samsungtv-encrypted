@@ -7,8 +7,6 @@ import json
 import voluptuous as vol
 import os
 import websocket
-import wakeonlan
-import hdmi_cec
 import time
 import requests
 import subprocess
@@ -16,6 +14,7 @@ import subprocess
 from .PySmartCrypto.pysmartcrypto import PySmartCrypto
 
 from homeassistant import util
+from homeassistant.components import hdmi_cec
 from homeassistant.components.media_player import MediaPlayerDevice, PLATFORM_SCHEMA
 from homeassistant.components.media_player.const import (
     MEDIA_TYPE_CHANNEL,
@@ -159,7 +158,6 @@ class SamsungTVDevice(MediaPlayerDevice):
         self._name = name
         self._mac = mac
         self._uuid = uuid
-        self._wol = wakeonlan
         # Assume that the TV is not muted
         self._muted = False
         # Assume that the TV is in Play mode
