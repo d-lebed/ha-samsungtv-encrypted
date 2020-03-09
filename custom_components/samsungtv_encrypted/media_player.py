@@ -14,7 +14,6 @@ import subprocess
 from .PySmartCrypto.pysmartcrypto import PySmartCrypto
 
 from homeassistant import util
-from homeassistant.components import hdmi_cec
 from homeassistant.components.media_player import MediaPlayerDevice, PLATFORM_SCHEMA
 from homeassistant.components.media_player.const import (
     MEDIA_TYPE_CHANNEL,
@@ -328,7 +327,7 @@ class SamsungTVDevice(MediaPlayerDevice):
 
     def turn_off(self):
         """Turn off media player."""
-        hdmi_cec.standby()
+        self.hass.services.call('hdmi_cec', 'standby')
         # Force closing of remote session to provide instant UI feedback
         try:
             self.get_remote().close()
@@ -338,7 +337,7 @@ class SamsungTVDevice(MediaPlayerDevice):
 
     def turn_on(self):
         """Turn the media player on."""
-        hdmi_cec.power_on()
+        self.hass.services.call('hdmi_cec', 'power_on')
 
     async def async_select_source(self, source):
         """Select input source."""
