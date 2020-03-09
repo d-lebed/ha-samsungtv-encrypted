@@ -14,7 +14,7 @@ import subprocess
 from .PySmartCrypto.pysmartcrypto import PySmartCrypto
 
 from homeassistant import util
-from homeassistant.components.media_player import MediaPlayerDevice, PLATFORM_SCHEMA
+from homeassistant.components.media_player import MediaPlayerDevice, PLATFORM_SCHEMA, DEVICE_CLASS_TV
 from homeassistant.components.media_player.const import (
     MEDIA_TYPE_CHANNEL,
     SUPPORT_NEXT_TRACK,
@@ -266,6 +266,11 @@ class SamsungTVDevice(MediaPlayerDevice):
     def supported_features(self):
         """Flag media player features that are supported."""
         return SUPPORT_SAMSUNGTV | SUPPORT_TURN_ON
+
+    @property
+    def device_class(self):
+        """Set the device class to TV."""
+        return DEVICE_CLASS_TV
 
     def volume_up(self):
         """Volume up the media player."""
