@@ -12,8 +12,8 @@ Is a modified version of the built-in [samsungtv](https://www.home-assistant.io/
 
 # Additional Features:
 
-* Send keys using a native Home Assistant service
-* Customize source list at media player dropdown list
+* Send keys using a native Home Assistant service (WIP)
+* Customize source list at media player dropdown list (WIP)
 
 # Installation (There are two methods, with HACS or manual)
 
@@ -45,7 +45,7 @@ After a correct installation, your configuration directory should look like the 
 
 # Configuration
 
-1. Use get_token.py to get your Samsung TV token (use --port 8080). Store CTX <TOKEN> and <SESSION_ID> output.
+1. Use get_token.py to get your Samsung TV token (use --port 8080). Store CTX <TOKEN> and <SESSION_ID> output. Your TV must be turned on and connected to Internet with the specific IP. Terminal where you have executed get_token.py will ask for a PIN, that will be showed in your TV screen.
 2. Enable the component by editing the configuration.yaml file (within the config directory as well).
 Edit it by adding the following lines:
     ### Example configuration.yaml
@@ -79,4 +79,5 @@ Edit it by adding the following lines:
 ***References***
 ----------------
 
-The code list has been folked from: https://github.com/arturleao/samsungtv_custom<br>
+- The code list has been folked from: https://github.com/arturleao/samsungtv_custom<br>
+- If you want to buy me a coffee: https://www.buymeacoffee.com/XAF0dnBOG
