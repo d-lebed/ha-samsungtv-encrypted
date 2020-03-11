@@ -14,6 +14,8 @@ import subprocess
 
 from .PySmartCrypto.pysmartcrypto import PySmartCrypto
 
+from bs4 import BeautifulSoup
+
 from homeassistant import util
 from homeassistant.components.media_player import MediaPlayerDevice, PLATFORM_SCHEMA, DEVICE_CLASS_TV
 from homeassistant.components.media_player.const import (
@@ -67,6 +69,7 @@ SUPPORT_SAMSUNGTV = (
     SUPPORT_PAUSE
     | SUPPORT_VOLUME_STEP
     | SUPPORT_VOLUME_MUTE
+    | SUPPORT_VOLUME_SET
     | SUPPORT_PREVIOUS_TRACK
     | SUPPORT_SELECT_SOURCE
     | SUPPORT_NEXT_TRACK
@@ -161,6 +164,7 @@ class SamsungTVDevice(MediaPlayerDevice):
         self._wol = wakeonlan
         # Assume that the TV is not muted
         self._muted = False
+        self._volume = 0
         # Assume that the TV is in Play mode
         self._playing = True
         self._state = None
@@ -182,6 +186,10 @@ class SamsungTVDevice(MediaPlayerDevice):
     def update(self):
         """Update state of device."""
         self.send_key("KEY")
+        currentvolume = self.SendSOAP('smp_17_', 'urn:schemas-upnp-org:service:RenderingControl:1', 'GetVolume',
+                                      '<InstanceID>0</InstanceID><Channel>Master</Channel>', 'currentvolume')
+        if currentvolume:
+            self._volume = int(currentvolume) / 100
 
     def pingTV(self):
         """ping TV"""
@@ -255,6 +263,11 @@ class SamsungTVDevice(MediaPlayerDevice):
         return self._state
 
     @property
+    def volume_level(self):
+        """Volume level of the media player (0..1)."""
+        return self._volume
+
+    @property
     def is_volume_muted(self):
         """Boolean if volume is currently muted."""
         return self._muted
@@ -313,6 +326,13 @@ class SamsungTVDevice(MediaPlayerDevice):
         """Send the previous track command."""
         self.send_key("KEY_REWIND")
 
+    def set_volume_level(self, volume):
+        """Volume up the media player."""
+        volset = str(round(volume * 100))
+        self.SendSOAP('smp_17_', 'urn:schemas-upnp-org:service:RenderingControl:1', 'SetVolume',
+                      '<InstanceID>0</InstanceID><DesiredVolume>' + volset + '</DesiredVolume><Channel>Master</Channel>',
+                      '')
+
     async def async_play_media(self, media_type, media_id, **kwargs):
         """Support changing a channel."""
 
@@ -356,3 +376,55 @@ class SamsungTVDevice(MediaPlayerDevice):
     async def async_select_source(self, source):
         """Select input source."""
         await self.hass.async_add_job(self.send_key, self._sourcelist[source])
+
+    def SendSOAP(self, path, urn, service, body, XMLTag):
+        CRLF = "\r\n"
+        xmlBody = "";
+        xmlBody += '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
+        xmlBody += '<s:Body>'
+        xmlBody += '<u:{service} xmlns:u="{urn}">{body}</u:{service}>'
+        xmlBody += '</s:Body>'
+        xmlBody += '</s:Envelope>'
+        xmlBody = xmlBody.format(urn=urn, service=service, body=body)
+
+        soapRequest = "POST /{path} HTTP/1.0%s" % (CRLF)
+        soapRequest += "HOST: {host}:{port}%s" % (CRLF)
+        soapRequest += "CONTENT-TYPE: text/xml;charset=\"utf-8\"%s" % (CRLF)
+        soapRequest += "SOAPACTION: \"{urn}#{service}\"%s" % (CRLF)
+        soapRequest += "%s" % (CRLF)
+        soapRequest += "{xml}%s" % (CRLF)
+        soapRequest = soapRequest.format(host=self._config['host'], port=7676, xml=xmlBody, path=path,
+                                         urn=urn, service=service, lenXml=len(xmlBody))
+
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.settimeout(1)
+        client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        response_xml = ''
+        _LOGGER.info("Samsung TV sending: %s", soapRequest)
+
+        try:
+            client.connect((self._config['host'], 7676))
+            client.send(bytes(soapRequest, 'utf-8'))
+            while True:
+                data_buffer = client.recv(4096)
+                if not data_buffer: break
+                response_xml += str(data_buffer)
+        except socket.error as e:
+            return
+
+        response_xml = bytes(response_xml, 'utf-8')
+        response_xml = response_xml.decode(encoding="utf-8")
+        response_xml = response_xml.replace("&lt;", "<")
+        response_xml = response_xml.replace("&gt;", ">")
+        response_xml = response_xml.replace("&quot;", "\"")
+        _LOGGER.info("Samsung TV received: %s", response_xml)
+        if XMLTag:
+            soup = BeautifulSoup(str(response_xml), 'html.parser')
+            xmlValues = soup.find_all(XMLTag)
+            xmlValues_names = [xmlValue.string for xmlValue in xmlValues]
+            if len(xmlValues_names) == 1:
+                return xmlValues_names[0]
+            else:
+                return xmlValues_names
+        else:
+            return response_xml[response_xml.find('<s:Envelope'):]
