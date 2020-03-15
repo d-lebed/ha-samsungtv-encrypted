@@ -248,24 +248,9 @@ class SamsungTVDevice(MediaPlayerDevice):
         )
 
     @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the device."""
-        return self._uuid
-
-    @property
-    def name(self):
-        """Return the name of the device."""
-        return self._name
-
-    @property
-    def state(self):
-        """Return the state of the device."""
-        return self._state
-
-    @property
-    def volume_level(self):
-        """Volume level of the media player (0..1)."""
-        return self._volume
+    def device_class(self):
+        """Set the device class to TV."""
+        return DEVICE_CLASS_TV
 
     @property
     def is_volume_muted(self):
@@ -273,9 +258,19 @@ class SamsungTVDevice(MediaPlayerDevice):
         return self._muted
 
     @property
+    def name(self):
+        """Return the name of the device."""
+        return self._name
+
+    @property
     def source_list(self):
         """List of available input sources."""
         return list(self._sourcelist)
+
+    @property
+    def state(self):
+        """Return the state of the device."""
+        return self._state
 
     @property
     def supported_features(self):
@@ -285,9 +280,14 @@ class SamsungTVDevice(MediaPlayerDevice):
         return SUPPORT_SAMSUNGTV
 
     @property
-    def device_class(self):
-        """Set the device class to TV."""
-        return DEVICE_CLASS_TV
+    def unique_id(self) -> str:
+        """Return the unique ID of the device."""
+        return self._uuid
+
+    @property
+    def volume_level(self):
+        """Volume level of the media player (0..1)."""
+        return self._volume
 
     def volume_up(self):
         """Volume up the media player."""
@@ -380,7 +380,8 @@ class SamsungTVDevice(MediaPlayerDevice):
     def SendSOAP(self, path, urn, service, body, XMLTag):
         CRLF = "\r\n"
         xmlBody = "";
-        xmlBody += '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
+        xmlBody += '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.' \
+                   'xmlsoap.org/soap/encoding/">'
         xmlBody += '<s:Body>'
         xmlBody += '<u:{service} xmlns:u="{urn}">{body}</u:{service}>'
         xmlBody += '</s:Body>'
@@ -394,11 +395,12 @@ class SamsungTVDevice(MediaPlayerDevice):
         soapRequest += "%s" % (CRLF)
         soapRequest += "{xml}%s" % (CRLF)
         soapRequest = soapRequest.format(host=self._config['host'], port=7676, xml=xmlBody, path=path,
-                                         urn=urn, service=service, lenXml=len(xmlBody))
+                                         urn=urn, service=service)
 
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.settimeout(1)
+        client.settimeout(0.5)
         client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        dataBuffer = ''
         response_xml = ''
         _LOGGER.info("Samsung TV sending: %s", soapRequest)
 
@@ -406,9 +408,9 @@ class SamsungTVDevice(MediaPlayerDevice):
             client.connect((self._config['host'], 7676))
             client.send(bytes(soapRequest, 'utf-8'))
             while True:
-                data_buffer = client.recv(4096)
-                if not data_buffer: break
-                response_xml += str(data_buffer)
+                dataBuffer = client.recv(4096)
+                if not dataBuffer: break
+                response_xml += str(dataBuffer)
         except socket.error as e:
             return
 
